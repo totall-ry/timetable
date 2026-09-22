@@ -159,7 +159,6 @@
             margin-bottom: 0.5rem;
         }
 
-        /* Custom scrollbar styling for smoothness */
         .grid-wrapper::-webkit-scrollbar {
             height: 8px;
         }
@@ -223,7 +222,6 @@
             margin-top: 2px;
         }
 
-        /* Sticky time column so hours remain visible while scrolling horizontally */
         .time-col {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-right: 1px solid #d1d8e0;
@@ -407,6 +405,48 @@
             justify-content: flex-end;
             margin-top: 1.5rem;
         }
+
+        /* Read-only details display styles */
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 1rem;
+            padding: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            border: 1px solid #e1e8ed;
+        }
+        .info-row {
+            display: flex;
+            flex-direction: column;
+        }
+        .info-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #636e72;
+            font-weight: 700;
+        }
+        .info-value {
+            font-size: 1.05rem;
+            color: #2d3436;
+            font-weight: 600;
+            margin-top: 0.1rem;
+        }
+        .badge-tag {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            text-transform: capitalize;
+            width: fit-content;
+        }
+        .badge-tag.lecture { background: var(--lecture-bg); }
+        .badge-tag.tutorial { background: var(--tutorial-bg); }
+        .badge-tag.lab { background: var(--lab-bg); }
+
         .delete-btn {
             background: linear-gradient(135deg, #f5576c 0%, #e17055 100%);
             color: white;
@@ -442,7 +482,6 @@
             bottom: 2.5rem;
         }
 
-        /* Responsive adaptations for smaller screens */
         @media (max-width: 900px) {
             .app-container { max-width: 100%; padding: 1.2rem 1rem; }
             h1 { font-size: 1.6rem; }
@@ -478,7 +517,7 @@
         </div>
     </div>
 
-    <!-- Timetable Grid Wrapper for Horizontal Scroll -->
+    <!-- Timetable Grid Wrapper -->
     <div class="grid-wrapper">
         <div class="week-grid" id="timetableGrid"></div>
     </div>
@@ -541,6 +580,34 @@
     </div>
 </div>
 
+<!-- Modal for Read-Only Details (Non-Admin View) -->
+<div class="modal-backdrop" id="viewModalBackdrop">
+    <div class="modal">
+        <h3>Class Details</h3>
+        <div class="info-card">
+            <div class="info-row">
+                <span class="info-label">Course Code</span>
+                <span class="info-value" id="viewCourseCode">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Type</span>
+                <span id="viewClassType" class="badge-tag lecture">Lecture</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Time & Day</span>
+                <span class="info-value" id="viewTimeDay">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Location</span>
+                <span class="info-value" id="viewLocation">-</span>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-primary" id="closeViewModalBtn">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- Login Modal -->
 <div class="modal-backdrop" id="loginModalBackdrop">
     <div class="modal">
@@ -574,7 +641,6 @@
     import { 
         getFirestore, 
         doc, 
-        getDoc, 
         setDoc,
         onSnapshot 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -626,6 +692,14 @@
     const clearAllBtn = document.getElementById('clearAllBtn');
     const toastMsg = document.getElementById('toastMsg');
     
+    // View Modal DOM
+    const viewModalBackdrop = document.getElementById('viewModalBackdrop');
+    const viewCourseCode = document.getElementById('viewCourseCode');
+    const viewClassType = document.getElementById('viewClassType');
+    const viewTimeDay = document.getElementById('viewTimeDay');
+    const viewLocation = document.getElementById('viewLocation');
+    const closeViewModalBtn = document.getElementById('closeViewModalBtn');
+
     // Auth DOM
     const authBadge = document.getElementById('authBadge');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -782,7 +856,11 @@
 
             block.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (isAdmin) openEditModal(cls.id);
+                if (isAdmin) {
+                    openEditModal(cls.id);
+                } else {
+                    openViewModal(cls.id);
+                }
             });
 
             startCell.appendChild(block);
@@ -790,17 +868,21 @@
     }
 
     // ---------- MODAL OPERATIONS ----------
-    function openAddModal() {
-        editingClassId = null;
-        modalTitle.textContent = '➕ Add class';
-        courseCodeInput.value = '';
-        classTypeSelect.value = 'lecture';
-        startTimeSelect.value = '9:00';
-        endTimeSelect.value = '10:00';
-        weekdaySelect.value = 'Monday';
-        classLocationInput.value = '';
-        deleteClassBtn.style.display = 'none';
-        modalBackdrop.classList.add('active');
+    function openViewModal(classId) {
+        const cls = classes.find(c => c.id === classId);
+        if (!cls) return;
+
+        viewCourseCode.textContent = cls.courseCode;
+        viewClassType.textContent = cls.type || 'lecture';
+        viewClassType.className = `badge-tag ${cls.type || 'lecture'}`;
+        viewTimeDay.textContent = `${cls.weekday}, ${cls.startTime} – ${cls.endTime}`;
+        viewLocation.textContent = cls.location || 'Not specified';
+
+        viewModalBackdrop.classList.add('active');
+    }
+
+    function closeViewModal() {
+        viewModalBackdrop.classList.remove('active');
     }
 
     function openAddModalFromCell(day, hour) {
@@ -1019,13 +1101,30 @@
     }
 
     // ---------- EVENT LISTENERS ----------
-    addClassBtn.addEventListener('click', openAddModal);
+    addClassBtn.addEventListener('click', () => {
+        editingClassId = null;
+        modalTitle.textContent = '➕ Add class';
+        courseCodeInput.value = '';
+        classTypeSelect.value = 'lecture';
+        startTimeSelect.value = '9:00';
+        endTimeSelect.value = '10:00';
+        weekdaySelect.value = 'Monday';
+        classLocationInput.value = '';
+        deleteClassBtn.style.display = 'none';
+        modalBackdrop.classList.add('active');
+    });
     saveClassBtn.addEventListener('click', saveClassFromModal);
     cancelModalBtn.addEventListener('click', closeModal);
     deleteClassBtn.addEventListener('click', deleteCurrentClass);
     modalBackdrop.addEventListener('click', (e) => {
         if (e.target === modalBackdrop) closeModal();
     });
+
+    closeViewModalBtn.addEventListener('click', closeViewModal);
+    viewModalBackdrop.addEventListener('click', (e) => {
+        if (e.target === viewModalBackdrop) closeViewModal();
+    });
+
     exportTxtBtn.addEventListener('click', exportTxt);
     clearAllBtn.addEventListener('click', clearAll);
     importTxtBtn.addEventListener('click', () => txtFileInput.click());
