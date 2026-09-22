@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Timetable</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-dark: #5f3dc4;
+            --secondary: #00b894;
+            --accent: #fd79a8;
+            --warning: #fdcb6e;
+            --danger: #e17055;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --text-light: #636e72;
+            --border: #e1e8ed;
+            --shadow: 0 8px 30px rgba(0,0,0,0.08);
+            --shadow-hover: 0 12px 40px rgba(0,0,0,0.15);
+            --lecture-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --tutorial-bg: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --lab-bg: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .app-container {
+            max-width: 1400px;
+            width: 100%;
+            background: var(--card-bg);
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow);
+            padding: 1.8rem 1.5rem;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #2d3436;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.5px;
+            flex-wrap: wrap;
+        }
+        .header-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: auto;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 0.9rem 1.2rem;
+            border-radius: 1.5rem;
+        }
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            align-items: center;
+        }
+        .btn {
+            background: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: #2d3436;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a3f8f 100%);
+        }
+        .btn-outline {
+            background: white;
+            border: 2px solid #d1d8e0;
+        }
+        .btn-outline:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #f5576c 0%, #e17055 100%);
+            color: white;
+        }
+        .file-input {
+            display: none;
+        }
+        .week-grid {
+            display: grid;
+            grid-template-columns: 70px repeat(7, 1fr);
+            border: 2px solid #e1e8ed;
+            border-radius: 1rem;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .corner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-right: 1px solid #d1d8e0;
+            border-bottom: 1px solid #d1d8e0;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 1px;
+        }
+        .day-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 0.9rem 0.5rem;
+            text-align: center;
+            font-weight: 700;
+            font-size: 1rem;
+            border-right: 1px solid #d1d8e0;
+            border-bottom: 1px solid #d1d8e0;
+            color: #2d3436;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        .day-header:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        }
+        .day-header span {
+            font-weight: 400;
+            font-size: 0.7rem;
+            color: #636e72;
+            margin-top: 2px;
+        }
+        .time-col {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-right: 1px solid #d1d8e0;
+            border-bottom: 1px solid #d1d8e0;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #495057;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.25rem;
+            min-height: 55px;
+        }
+        .cell {
+            min-height: 55px;
+            border-right: 1px solid #e9ecef;
+            border-bottom: 1px solid #e9ecef;
+            background-color: white;
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            align-content: flex-start;
+            overflow: visible;
+        }
+        .cell:hover {
+            background: #f1f3f5;
+            box-shadow: inset 0 0 0 2px #d1d8e0;
+        }
+        .class-block {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            background: var(--lecture-bg);
+            color: white;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.4rem 0.3rem;
+            border-radius: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            z-index: 1;
+            transition: all 0.3s;
+            line-height: 1.2;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+        .class-block:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            z-index: 2;
+            transform: scale(1.02);
+        }
+        .class-block.tutorial {
+            background: var(--tutorial-bg);
+        }
+        .class-block.lecture {
+            background: var(--lecture-bg);
+        }
+        .class-block.lab {
+            background: var(--lab-bg);
+        }
+        .class-block .block-time {
+            font-size: 0.62rem;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-top: 0.1rem;
+        }
+        .class-block .block-location {
+            font-size: 0.6rem;
+            font-weight: 400;
+            opacity: 0.85;
+            margin-top: 0.1rem;
+            font-style: italic;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            margin-top: 1.2rem;
+            padding: 0.8rem 1.2rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            color: #495057;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        .lecture-dot { background: var(--lecture-bg); }
+        .tutorial-dot { background: var(--tutorial-bg); }
+        .lab-dot { background: var(--lab-bg); }
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.3s;
+        }
+        .modal-backdrop.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 2rem 1.8rem;
+            width: 440px;
+            max-width: 90vw;
+            box-shadow: var(--shadow-hover);
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal h3 {
+            margin-bottom: 1.4rem;
+            font-weight: 700;
+            color: #2d3436;
+            font-size: 1.4rem;
+        }
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #495057;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 2px solid #d1d8e0;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            background: #f8f9fa;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .form-row {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .form-row .form-group {
+            flex: 1;
+            min-width: 100px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+        .delete-btn {
+            background: linear-gradient(135deg, #f5576c 0%, #e17055 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .delete-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+        .success-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #00b894 0%, #00a381 100%);
+            color: white;
+            padding: 0.8rem 1.6rem;
+            border-radius: 40px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 184, 148, 0.3);
+            z-index: 2000;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+        }
+        .success-toast.show {
+            opacity: 1;
+            bottom: 2.5rem;
+        }
+        @media (max-width: 800px) {
+            .week-grid { grid-template-columns: 50px repeat(7, minmax(70px,1fr)); }
+            .time-col { font-size: 0.6rem; }
+            .app-container { padding: 1rem 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <h1>
+        University Timetable
+        <span class="header-badge">✨ Auto‑saved locally</span>
+    </h1>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <button class="btn btn-primary" id="addClassBtn">+ Add class</button>
+            <button class="btn btn-outline" id="importTxtBtn">📂 Import TXT</button>
+            <input type="file" id="txtFileInput" class="file-input" accept=".txt, text/plain">
+            <button class="btn btn-outline" id="exportTxtBtn">📄 Export TXT</button>
+        </div>
+        <div class="toolbar-right">
+            <button class="btn btn-danger" id="clearAllBtn">🗑️ Clear all</button>
+        </div>
+    </div>
+
+    <!-- Timetable Grid -->
+    <div class="week-grid" id="timetableGrid"></div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item"><span class="legend-dot lecture-dot"></span> Lecture</div>
+        <div class="legend-item"><span class="legend-dot tutorial-dot"></span> Tutorial</div>
+        <div class="legend-item"><span class="legend-dot lab-dot"></span> Lab</div>
+    </div>
+</div>
+
+<!-- Modal for Add/Edit/Delete -->
+<div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+        <h3 id="modalTitle">Add class</h3>
+        <div class="form-group">
+            <label>Course code</label>
+            <input type="text" id="courseCode" placeholder="e.g. CS101">
+        </div>
+        <div class="form-group">
+            <label>Class type</label>
+            <select id="classType">
+                <option value="lecture">Lecture</option>
+                <option value="tutorial">Tutorial</option>
+                <option value="lab">Lab</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Start time</label>
+                <select id="startTime"></select>
+            </div>
+            <div class="form-group">
+                <label>End time</label>
+                <select id="endTime"></select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Weekday</label>
+            <select id="weekdaySelect">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+                <option value="Sunday">Sunday</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="classLocation" placeholder="e.g. Room 101, Building A">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" id="cancelModalBtn">Cancel</button>
+            <button class="btn btn-primary" id="saveClassBtn">Save</button>
+            <button class="delete-btn" id="deleteClassBtn" style="display: none;">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div class="success-toast" id="toastMsg">Saved</div>
+
+<script>
+    (function() {
+        // ---------- CONSTANTS ----------
+        const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const START_HOUR = 8;
+        const END_HOUR = 19;
+        const HOUR_HEIGHT = 55;
+
+        // ---------- STATE ----------
+        let classes = [];
+        let editingClassId = null;
+
+        // DOM elements
+        const gridContainer = document.getElementById('timetableGrid');
+        const modalBackdrop = document.getElementById('modalBackdrop');
+        const modalTitle = document.getElementById('modalTitle');
+        const courseCodeInput = document.getElementById('courseCode');
+        const classTypeSelect = document.getElementById('classType');
+        const startTimeSelect = document.getElementById('startTime');
+        const endTimeSelect = document.getElementById('endTime');
+        const weekdaySelect = document.getElementById('weekdaySelect');
+        const classLocationInput = document.getElementById('classLocation');
+        const saveClassBtn = document.getElementById('saveClassBtn');
+        const cancelModalBtn = document.getElementById('cancelModalBtn');
+        const deleteClassBtn = document.getElementById('deleteClassBtn');
+        const addClassBtn = document.getElementById('addClassBtn');
+        const importTxtBtn = document.getElementById('importTxtBtn');
+        const txtFileInput = document.getElementById('txtFileInput');
+        const exportTxtBtn = document.getElementById('exportTxtBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const toastMsg = document.getElementById('toastMsg');
+
+        // ---------- POPULATE TIME SELECTS ----------
+        function populateTimeOptions() {
+            startTimeSelect.innerHTML = '';
+            endTimeSelect.innerHTML = '';
+            for (let h = START_HOUR; h <= END_HOUR; h++) {
+                const timeStr = `${h}:00`;
+                startTimeSelect.appendChild(new Option(timeStr, timeStr));
+                endTimeSelect.appendChild(new Option(timeStr, timeStr));
+            }
+            startTimeSelect.value = '9:00';
+            endTimeSelect.value = '10:00';
+        }
+
+        // ---------- LOCAL STORAGE ----------
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('weeklyTimetableClasses', JSON.stringify(classes));
+            } catch (e) {
+                console.warn('Local storage not available');
+            }
+            showToast('💾 Timetable saved');
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('weeklyTimetableClasses');
+            if (stored) {
+                try {
+                    classes = JSON.parse(stored);
+                    if (!Array.isArray(classes)) classes = [];
+                } catch (e) {
+                    classes = [];
+                }
+            } else {
+                classes = [];
+            }
+        }
+
+        // ---------- RENDER TIMETABLE ----------
+        function renderTimetable() {
+            let html = '';
+            html += '<div class="corner">HOUR</div>';
+            DAYS.forEach(day => {
+                html += `<div class="day-header">${day}<span>${day.slice(0,3)}</span></div>`;
+            });
+
+            for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
+                const timeLabel = `${hour}:00`;
+                html += `<div class="time-col">${timeLabel}</div>`;
+                DAYS.forEach(day => {
+                    html += `<div class="cell" data-day="${day}" data-hour="${hour}"></div>`;
+                });
+            }
+            gridContainer.innerHTML = html;
+            renderClassBlocks();
+
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.addEventListener('click', (e) => {
+                    if (e.target.closest('.class-block')) return;
+                    const day = cell.dataset.day;
+                    const hour = parseInt(cell.dataset.hour);
+                    openAddModalFromCell(day, hour);
+                });
+            });
+        }
+
+        function renderClassBlocks() {
+            document.querySelectorAll('.class-block').forEach(el => el.remove());
+
+            classes.forEach(cls => {
+                const startHour = parseInt(cls.startTime.split(':')[0]);
+                const endHour = parseInt(cls.endTime.split(':')[0]);
+                const day = cls.weekday;
+                if (endHour < startHour) return;
+
+                const startCell = document.querySelector(`.cell[data-day="${day}"][data-hour="${startHour}"]`);
+                if (!startCell) return;
+
+                const hoursSpan = Math.max(1, endHour - startHour);
+                const blockHeight = hoursSpan * HOUR_HEIGHT + (hoursSpan - 1);
+
+                const block = document.createElement('div');
+                block.className = `class-block ${cls.type || 'lecture'}`;
+                block.dataset.id = cls.id;
+                block.style.height = `${blockHeight}px`;
+                block.style.top = '0';
+                block.style.left = '0';
+                block.style.right = '0';
+
+                const timeRange = `${cls.startTime}–${cls.endTime}`;
+                const location = cls.location ? `📍 ${cls.location}` : '';
+                block.innerHTML = `
+                    <span class="block-course">${cls.courseCode}</span>
+                    <span class="block-time">${timeRange}</span>
+                    ${location ? `<span class="block-location">${location}</span>` : ''}
+                `;
+
+                block.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditModal(cls.id);
+                });
+
+                startCell.appendChild(block);
+            });
+        }
+
+        // ---------- MODAL OPERATIONS ----------
+        function openAddModal() {
+            editingClassId = null;
+            modalTitle.textContent = '➕ Add class';
+            courseCodeInput.value = '';
+            classTypeSelect.value = 'lecture';
+            startTimeSelect.value = '9:00';
+            endTimeSelect.value = '10:00';
+            weekdaySelect.value = 'Monday';
+            classLocationInput.value = '';
+            deleteClassBtn.style.display = 'none';
+            modalBackdrop.classList.add('active');
+        }
+
+        function openAddModalFromCell(day, hour) {
+            editingClassId = null;
+            modalTitle.textContent = '➕ Add class';
+            courseCodeInput.value = '';
+            classTypeSelect.value = 'lecture';
+            startTimeSelect.value = `${hour}:00`;
+            endTimeSelect.value = `${Math.min(hour + 1, END_HOUR)}:00`;
+            weekdaySelect.value = day;
+            classLocationInput.value = '';
+            deleteClassBtn.style.display = 'none';
+            modalBackdrop.classList.add('active');
+        }
+
+        function openEditModal(classId) {
+            const cls = classes.find(c => c.id === classId);
+            if (!cls) return;
+            editingClassId = classId;
+            modalTitle.textContent = '✏️ Edit class';
+            courseCodeInput.value = cls.courseCode;
+            classTypeSelect.value = cls.type || 'lecture';
+            startTimeSelect.value = cls.startTime;
+            endTimeSelect.value = cls.endTime;
+            weekdaySelect.value = cls.weekday;
+            classLocationInput.value = cls.location || '';
+            deleteClassBtn.style.display = 'inline-block';
+            modalBackdrop.classList.add('active');
+        }
+
+        function closeModal() {
+            modalBackdrop.classList.remove('active');
+            editingClassId = null;
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+
+        function collectFormData() {
+            const courseCode = courseCodeInput.value.trim();
+            const type = classTypeSelect.value;
+            const startTime = startTimeSelect.value;
+            const endTime = endTimeSelect.value;
+            const weekday = weekdaySelect.value;
+            const location = classLocationInput.value.trim();
+            if (!courseCode) {
+                alert('Please enter a course code');
+                return null;
+            }
+            const [startH] = startTime.split(':').map(Number);
+            const [endH] = endTime.split(':').map(Number);
+            if (endH < startH) {
+                alert('End time must be after start time');
+                return null;
+            }
+            return { courseCode, type, startTime, endTime, weekday, location };
+        }
+
+        function saveClassFromModal() {
+            const data = collectFormData();
+            if (!data) return;
+
+            if (editingClassId) {
+                const index = classes.findIndex(c => c.id === editingClassId);
+                if (index !== -1) {
+                    classes[index] = { ...classes[index], ...data };
+                }
+            } else {
+                classes.push({ id: generateId(), ...data });
+            }
+            saveToLocalStorage();
+            renderTimetable();
+            closeModal();
+        }
+
+        function deleteCurrentClass() {
+            if (!editingClassId) return;
+            if (confirm('Delete this class?')) {
+                classes = classes.filter(c => c.id !== editingClassId);
+                saveToLocalStorage();
+                renderTimetable();
+                closeModal();
+            }
+        }
+
+        // ---------- TXT IMPORT / EXPORT ----------
+        function exportTxt() {
+            if (classes.length === 0) {
+                alert('No classes to export');
+                return;
+            }
+            let txtContent = 'Course Code,Type,Start Time,End Time,Weekday,Location\n';
+            classes.forEach(cls => {
+                txtContent += `${cls.courseCode},${cls.type || 'lecture'},${cls.startTime},${cls.endTime},${cls.weekday},${cls.location || ''}\n`;
+            });
+            const blob = new Blob([txtContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'timetable.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function normalizeDay(val) {
+            if (!val) return 'Monday';
+            val = val.toString().trim();
+            const dayMap = {
+                '0': 'Sunday', '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday'
+            };
+            if (dayMap[val]) return dayMap[val];
+            const match = DAYS.find(d => d.toLowerCase() === val.toLowerCase());
+            return match || 'Monday';
+        }
+
+        function normalizeTime(val) {
+            if (!val) return '9:00';
+            val = val.toString().trim();
+            if (!val.includes(':')) {
+                const h = parseInt(val);
+                if (!isNaN(h)) return `${h}:00`;
+            }
+            return val;
+        }
+
+        function importTxt(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                const lines = content.split(/\r?\n/);
+                const imported = [];
+
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (!line || line.startsWith('#')) return;
+                    if (line.toLowerCase().includes('course code') || line.toLowerCase().includes('weekday')) return; // skip header
+
+                    const parts = line.split(/[,\t]+/).map(s => s.trim());
+                    if (parts.length < 5) return;
+
+                    let courseCode = parts[0];
+                    let type = 'lecture';
+                    let startTime = '9:00';
+                    let endTime = '10:00';
+                    let weekday = 'Monday';
+                    let location = '';
+
+                    const possibleType = parts[1].toLowerCase();
+                    const isTypeField = ['lecture', 'tutorial', 'lab', 'regular'].includes(possibleType);
+
+                    if (isTypeField || (parts.length >= 6 && !['0','1','2','3','4','5','6','7'].includes(parts[1]) && !DAYS.some(d => d.toLowerCase() === parts[1].toLowerCase()))) {
+                        // Standard export format: courseCode, type, startTime, endTime, weekday, location
+                        type = possibleType === 'regular' ? 'lecture' : (['lecture', 'tutorial', 'lab'].includes(possibleType) ? possibleType : 'lecture');
+                        startTime = normalizeTime(parts[2]);
+                        endTime = normalizeTime(parts[3]);
+                        weekday = normalizeDay(parts[4]);
+                        location = parts[5] || '';
+                    } else {
+                        // Alternative / legacy format: courseCode, weekday, startTime, endTime/duration, location, type
+                        weekday = normalizeDay(parts[1]);
+                        startTime = normalizeTime(parts[2]);
+                        
+                        let durationOrEnd = parts[3];
+                        if (durationOrEnd.includes(':')) {
+                            endTime = normalizeTime(durationOrEnd);
+                        } else {
+                            const dur = parseInt(durationOrEnd) || 1;
+                            const startH = parseInt(startTime.split(':')[0]) || 9;
+                            endTime = `${Math.min(startH + dur, END_HOUR)}:00`;
+                        }
+                        location = parts[4] || '';
+                        if (parts[5]) {
+                            const t = parts[5].toLowerCase();
+                            type = ['tutorial', 'lab'].includes(t) ? t : 'lecture';
+                        }
+                    }
+
+                    if (courseCode) {
+                        imported.push({
+                            id: generateId(),
+                            courseCode,
+                            type,
+                            startTime,
+                            endTime,
+                            weekday,
+                            location
+                        });
+                    }
+                });
+
+                if (imported.length > 0) {
+                    classes = [...classes, ...imported];
+                    saveToLocalStorage();
+                    renderTimetable();
+                    showToast(`📥 Imported ${imported.length} class(es)`);
+                } else {
+                    alert('No valid classes could be parsed from the TXT file.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ---------- CLEAR ALL ----------
+        function clearAll() {
+            if (classes.length === 0) {
+                showToast('✨ No classes to clear');
+                return;
+            }
+            if (confirm('Remove all classes? This cannot be undone.')) {
+                classes = [];
+                saveToLocalStorage();
+                renderTimetable();
+                showToast('🗑️ All classes cleared');
+            }
+        }
+
+        // ---------- TOAST ----------
+        function showToast(message) {
+            toastMsg.textContent = message;
+            toastMsg.classList.add('show');
+            setTimeout(() => {
+                toastMsg.classList.remove('show');
+            }, 2000);
+        }
+
+        // ---------- EVENT LISTENERS ----------
+        addClassBtn.addEventListener('click', openAddModal);
+        saveClassBtn.addEventListener('click', saveClassFromModal);
+        cancelModalBtn.addEventListener('click', closeModal);
+        deleteClassBtn.addEventListener('click', deleteCurrentClass);
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) closeModal();
+        });
+        exportTxtBtn.addEventListener('click', exportTxt);
+        clearAllBtn.addEventListener('click', clearAll);
+        importTxtBtn.addEventListener('click', () => txtFileInput.click());
+        txtFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) importTxt(file);
+            txtFileInput.value = '';
+        });
+
+        // ---------- INIT ----------
+        populateTimeOptions();
+        loadFromLocalStorage();
+        renderTimetable();
+    })();
+</script>
+</body>
+</html>
