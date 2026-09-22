@@ -32,7 +32,7 @@
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 1.5rem;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -51,7 +51,7 @@
             z-index: 0;
         }
         .app-container {
-            max-width: 1400px;
+            max-width: 98%;
             width: 100%;
             background: var(--card-bg);
             border-radius: 1.5rem;
@@ -147,15 +147,42 @@
         .admin-active .admin-only {
             display: inline-flex !important;
         }
+
+        /* Horizontal scroll wrapper for mobile & tablet */
+        .grid-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 1rem;
+            border: 2px solid #e1e8ed;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Custom scrollbar styling for smoothness */
+        .grid-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+        .grid-wrapper::-webkit-scrollbar-track {
+            background: #f1f3f5;
+            border-radius: 0 0 1rem 1rem;
+        }
+        .grid-wrapper::-webkit-scrollbar-thumb {
+            background: #b2bec3;
+            border-radius: 4px;
+        }
+        .grid-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #6c5ce7;
+        }
+
         .week-grid {
             display: grid;
-            grid-template-columns: 70px repeat(7, 1fr);
-            border: 2px solid #e1e8ed;
-            border-radius: 1rem;
-            overflow: hidden;
+            grid-template-columns: 80px repeat(7, minmax(110px, 1fr));
+            min-width: 850px;
             background: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            width: 100%;
         }
+
         .corner {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-right: 1px solid #d1d8e0;
@@ -167,7 +194,11 @@
             align-items: center;
             justify-content: center;
             letter-spacing: 1px;
+            position: sticky;
+            left: 0;
+            z-index: 3;
         }
+
         .day-header {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 0.9rem 0.5rem;
@@ -191,6 +222,8 @@
             color: #636e72;
             margin-top: 2px;
         }
+
+        /* Sticky time column so hours remain visible while scrolling horizontally */
         .time-col {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-right: 1px solid #d1d8e0;
@@ -203,7 +236,11 @@
             justify-content: center;
             padding: 0 0.25rem;
             min-height: 55px;
+            position: sticky;
+            left: 0;
+            z-index: 2;
         }
+
         .cell {
             min-height: 55px;
             border-right: 1px solid #e9ecef;
@@ -230,9 +267,9 @@
             top: 0;
             background: var(--lecture-bg);
             color: white;
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             font-weight: 700;
-            padding: 0.4rem 0.3rem;
+            padding: 0.4rem 0.5rem;
             border-radius: 0;
             white-space: nowrap;
             overflow: hidden;
@@ -251,20 +288,20 @@
         .class-block:hover {
             filter: brightness(1.1);
             box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-            z-index: 2;
-            transform: scale(1.02);
+            z-index: 4;
+            transform: scale(1.01);
         }
         .class-block.tutorial { background: var(--tutorial-bg); }
         .class-block.lecture { background: var(--lecture-bg); }
         .class-block.lab { background: var(--lab-bg); }
         .class-block .block-time {
-            font-size: 0.62rem;
+            font-size: 0.65rem;
             font-weight: 400;
             opacity: 0.9;
             margin-top: 0.1rem;
         }
         .class-block .block-location {
-            font-size: 0.6rem;
+            font-size: 0.65rem;
             font-weight: 400;
             opacity: 0.85;
             margin-top: 0.1rem;
@@ -404,10 +441,19 @@
             opacity: 1;
             bottom: 2.5rem;
         }
-        @media (max-width: 800px) {
-            .week-grid { grid-template-columns: 50px repeat(7, minmax(70px,1fr)); }
-            .time-col { font-size: 0.6rem; }
-            .app-container { padding: 1rem 0.8rem; }
+
+        /* Responsive adaptations for smaller screens */
+        @media (max-width: 900px) {
+            .app-container { max-width: 100%; padding: 1.2rem 1rem; }
+            h1 { font-size: 1.6rem; }
+            .week-grid {
+                grid-template-columns: 60px repeat(7, minmax(90px, 1fr));
+                min-width: 700px;
+            }
+            .corner, .time-col { font-size: 0.65rem; }
+            .day-header { font-size: 0.85rem; padding: 0.6rem 0.3rem; }
+            .class-block { font-size: 0.65rem; padding: 0.25rem 0.3rem; }
+            .class-block .block-time, .class-block .block-location { font-size: 0.55rem; }
         }
     </style>
 </head>
@@ -432,8 +478,10 @@
         </div>
     </div>
 
-    <!-- Timetable Grid -->
-    <div class="week-grid" id="timetableGrid"></div>
+    <!-- Timetable Grid Wrapper for Horizontal Scroll -->
+    <div class="grid-wrapper">
+        <div class="week-grid" id="timetableGrid"></div>
+    </div>
 
     <!-- Legend -->
     <div class="legend">
